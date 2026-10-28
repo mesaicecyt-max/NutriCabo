@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoCita {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  COMPLETADA
+}
+
+enum OrigenCita {
+  WEB
+  ADMIN_MANUAL
+  WHATSAPP
+}
+
+enum TipoNotificacion {
+  CONFIRMACION
+  RECORDATORIO_24H
+  RECORDATORIO_2H
+  CANCELACION
+}
+
+model Paciente {
+  id               Int      @id @default(autoincrement())
+  nombre           String
+  telefonoWhatsapp String   @unique
+  email            String?
+  notas            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  citas            Cita[]
+
+  @@map("pacientes")
+}
+
+model Cita {
+  id               Int            @id @default(autoincrement())
+  pacienteId       Int
+  paciente         Paciente       @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  fechaHoraInicio  DateTime
+  fechaHoraFin     DateTime       // Inicio + 35 min exactos
+  estado           EstadoCita     @default(PENDIENTE)
+  origen           OrigenCita     @default(WEB)
+  motivoConsulta   String?
+  notasNutriologa  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  notificaciones   Notificacion[]
+
+  @@index([fechaHoraInicio])
+  @@map("citas")
+}
+
+model HorarioAtencion {
+  id          Int      @id @default(autoincrement())
+  diaSemana   Int      // 1=Lunes, 2=Martes, ..., 6=Sábado, 0=Domingo
+  horaInicio  String   // Formato "HH:mm" (ej. "09:00")
+  horaFin     String   // Formato "HH:mm" (ej. "18:00")
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("horarios_atencion")
+}
+
+model BloqueoAgenda {
+  id          Int      @id @default(autoincrement())
+  fechaInicio DateTime
+  fechaFin    DateTime
+  motivo      String?  // Ej. "Vacaciones", "Congreso de Nutrición", "Descanso"
+  createdAt   DateTime @default(now())
+
+  @@map("bloqueos_agenda")
+}
+
+model Notificacion {
+  id               Int              @id @default(autoincrement())
+  citaId           Int
+  cita             Cita             @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  tipo             TipoNotificacion
+  destinatario     String           // Número de WhatsApp
+  mensaje          String
+  enviado          Boolean          @default(false)
+  fechaProgramada  DateTime
+  fechaEnvio       DateTime?
+  error            String?
+  createdAt        DateTime         @default(now())
+
+  @@map("notificaciones")
+}
