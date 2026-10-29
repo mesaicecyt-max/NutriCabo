@@ -221,9 +221,11 @@ export default function AdminPage() {
     return (
       <div className="min-h-[75vh] flex items-center justify-center px-4">
         <div className="bg-white border-2 border-[#0E3346] rounded-3xl p-8 max-w-md w-full hard-shadow-lg text-center font-mono-tag">
-          <div className="w-14 h-14 bg-[#0E3346] text-[#FAF7F2] rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-[#0E3346] hard-shadow-sm">
-            <Lock className="w-7 h-7 text-[#D96B43]" />
-          </div>
+          <img
+            src="/logo-isos.png"
+            alt="ISOS Nutrición Clínica"
+            className="h-20 w-auto object-contain mx-auto mb-4 rounded-xl border-2 border-[#0E3346] hard-shadow-sm"
+          />
           <span className="text-[10px] uppercase font-bold text-[#D96B43] tracking-widest block">
             ACCESO RESTRINGIDO
           </span>
@@ -276,13 +278,16 @@ export default function AdminPage() {
       {/* SECCIÓN IMPRIMIBLE PARA PDF (Solo visible al imprimir con window.print) */}
       <div className="hidden print:block mb-8">
         <div className="border-b-2 border-black pb-4 mb-4 flex justify-between items-end">
-          <div>
-            <h1 className="text-2xl font-bold">ISOS Nutrición Clínica</h1>
-            <p className="text-xs">L.N. Claudia Itzel Chávez García · Cédula Profesional: 15781954</p>
-            <p className="text-xs">Col. El Chamizal, San José del Cabo, B.C.S. · Tel: 624-122-0715</p>
+          <div className="flex items-center gap-4">
+            <img src="/logo-isos.png" alt="ISOS Logo" className="h-16 w-auto object-contain" />
+            <div>
+              <h1 className="text-xl font-bold">ISOS Nutrición Clínica</h1>
+              <p className="text-xs">L.N. Claudia Itzel Chávez García · Cédula Profesional: 15781954</p>
+              <p className="text-xs">Col. El Chamizal, San José del Cabo, B.C.S. · Tel: 624-122-0715</p>
+            </div>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-bold">HOJA DE CONTROL DIARIO DE CITAS</h2>
+            <h2 className="text-base font-bold">HOJA DE CONTROL DIARIO DE CITAS</h2>
             <p className="text-xs">Fecha del Reporte: {fechaFiltro}</p>
           </div>
         </div>

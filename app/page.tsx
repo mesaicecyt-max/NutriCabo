@@ -127,16 +127,12 @@ export default function Home() {
           <div className="bg-[#0E3346] text-[#FAF7F2] rounded-3xl p-8 border-2 border-[#0E3346] hard-shadow-lg relative overflow-hidden">
             <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/5 pointer-events-none"></div>
 
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center font-bold font-serif text-sm">
-                  IS
-                </div>
-                <div>
-                  <span className="font-extrabold text-lg tracking-tight block leading-none">ISOS</span>
-                  <span className="text-[9px] font-mono-tag uppercase tracking-widest text-slate-300">Nutrición Clínica</span>
-                </div>
-              </div>
+            <div className="flex items-center justify-between mb-6">
+              <img
+                src="/logo-isos.png"
+                alt="ISOS Nutrición Clínica"
+                className="h-16 w-auto object-contain rounded-xl border border-white/20"
+              />
               <span className="px-2.5 py-1 bg-white/10 border border-white/20 rounded-lg text-[10px] font-mono-tag text-emerald-300 font-semibold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> AGENDA DISPONIBLE
               </span>

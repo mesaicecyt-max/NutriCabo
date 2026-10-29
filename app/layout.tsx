@@ -29,24 +29,23 @@ export default function RootLayout({
           </div>
         </div>
 
-        {/* Cabecera Principal (Solo opciones de pacientes) */}
+        {/* Cabecera Principal con Logo Oficial */}
         <header className="bg-[#FAF7F2]/95 backdrop-blur-sm border-b-2 border-[#0E3346] sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-            {/* Logo ISOS */}
+            {/* Logo Oficial ISOS */}
             <a href="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-[#0E3346] text-[#FAF7F2] rounded-2xl border-2 border-[#0E3346] flex items-center justify-center hard-shadow-sm group-hover:translate-x-[1px] group-hover:translate-y-[1px] group-hover:shadow-none transition-all">
-                <svg viewBox="0 0 40 40" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 5C11.716 5 5 11.716 5 20C5 28.284 11.716 35 20 35C28.284 35 35 28.284 35 20C35 11.716 28.284 5 20 5ZM20 9C23.5 9 26.5 11 28 14C25 15 22 17 20 20C18 23 15 25 12 26C13.5 29 16.5 31 20 31C26.075 31 31 26.075 31 20C31 18.5 30.7 17.1 30.1 15.8C28.2 13 24.5 10.5 20 9Z" opacity="0.9"/>
-                  <circle cx="20" cy="20" r="3" fill="#D96B43" />
-                </svg>
-              </div>
-              <div>
+              <img
+                src="/logo-isos.png"
+                alt="ISOS Nutrición Clínica"
+                className="h-12 w-auto object-contain rounded-xl border-2 border-[#0E3346] hard-shadow-sm group-hover:translate-x-[1px] group-hover:translate-y-[1px] group-hover:shadow-none transition-all"
+              />
+              <div className="hidden sm:block">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black tracking-tight text-[#0E3346] leading-none">ISOS</span>
+                  <span className="text-xl font-black tracking-tight text-[#0E3346] leading-none">ISOS</span>
                   <span className="text-[10px] font-mono-tag bg-[#0E3346]/10 text-[#0E3346] font-bold px-1.5 py-0.5 rounded">B.C.S.</span>
                 </div>
-                <span className="text-[11px] font-mono-tag tracking-wider uppercase text-[#0E3346]/70 block -mt-0.5">
-                  Nutrición Clínica
+                <span className="text-[10px] font-mono-tag tracking-wider uppercase text-[#0E3346]/70 block mt-0.5">
+                  San José del Cabo
                 </span>
               </div>
             </a>
@@ -78,12 +77,16 @@ export default function RootLayout({
         {/* Contenido Principal */}
         <main className="flex-1">{children}</main>
 
-        {/* Footer Editorial para Pacientes */}
+        {/* Footer Editorial con Logo */}
         <footer className="border-t-2 border-[#0E3346] bg-white mt-24 py-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid md:grid-cols-3 gap-8 mb-8 pb-8 border-b border-[#0E3346]/10">
               <div>
-                <h4 className="font-serif-title text-xl font-bold mb-2">ISOS Nutrición Clínica</h4>
+                <img
+                  src="/logo-isos.png"
+                  alt="ISOS Nutrición Clínica"
+                  className="h-12 w-auto object-contain rounded-xl border-2 border-[#0E3346] hard-shadow-sm mb-3"
+                />
                 <p className="text-xs font-mono-tag text-[#0E3346]/80 leading-relaxed mb-3">
                   L.N. Claudia Itzel Chávez García<br />
                   Cédula Profesional: 15781954
