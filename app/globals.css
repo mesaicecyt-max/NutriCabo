@@ -1,20 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,600&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+  --font-serif: 'Fraunces', serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: #FAF7F2;
+  color: #0E3346;
+}
+
+.font-serif-title {
+  font-family: var(--font-serif);
+}
+
+.font-mono-tag {
+  font-family: var(--font-mono);
+}
+
+/* Hard shadow utility */
+.hard-shadow {
+  box-shadow: 4px 4px 0px #0E3346;
+}
+
+.hard-shadow-sm {
+  box-shadow: 2.5px 2.5px 0px #0E3346;
+}
+
+.hard-shadow-lg {
+  box-shadow: 6px 6px 0px #0E3346;
+}
+
+.hard-shadow-accent {
+  box-shadow: 4px 4px 0px #D96B43;
 }
