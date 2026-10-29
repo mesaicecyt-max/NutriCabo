@@ -1,6 +1,6 @@
 import { addMinutes, format, isBefore, isAfter, parse, areIntervalsOverlapping } from "date-fns";
 
-export const DURACION_CITA = 35; // minutos por consulta
+export const DURACION_CITA = 35; // minutos internos por consulta (no publicitar en la web)
 
 export interface SlotHorario {
   horaInicio: string; // "09:00"
@@ -18,11 +18,33 @@ export interface IntervaloOcupado {
 }
 
 /**
+ * Horarios de atención oficiales de ISOS Nutrición Clínica:
+ * - Lunes a Viernes: 09:00 a 14:00 y 16:00 a 20:00
+ * - Sábado: 10:00 a 14:00
+ * - Domingo: Cerrado
+ */
+export function obtenerHorariosPorDia(diaSemana: number): { horaInicio: string; horaFin: string }[] {
+  if (diaSemana >= 1 && diaSemana <= 5) {
+    // Lunes a Viernes
+    return [
+      { horaInicio: "09:00", horaFin: "14:00" },
+      { horaInicio: "16:00", horaFin: "20:00" },
+    ];
+  } else if (diaSemana === 6) {
+    // Sábado
+    return [{ horaInicio: "10:00", horaFin: "14:00" }];
+  } else {
+    // Domingo cerrado
+    return [];
+  }
+}
+
+/**
  * Genera todos los bloques de 35 minutos dentro de los horarios de atención y
  * filtra los que colisionan con citas existentes o bloqueos de la nutrióloga.
  */
 export function generarSlotsDisponibles(
-  fechaBase: Date, // Ej. 2026-10-29
+  fechaBase: Date,
   horariosAtencion: { horaInicio: string; horaFin: string }[],
   intervalosOcupados: IntervaloOcupado[]
 ): SlotHorario[] {
@@ -36,7 +58,7 @@ export function generarSlotsDisponibles(
     while (true) {
       const slotFin = addMinutes(cursor, DURACION_CITA);
 
-      // Si el slot de 35 min sobrepasa la hora de cierre, se detiene
+      // Si el slot sobrepasa la hora de cierre, se detiene
       if (isAfter(slotFin, finRango)) {
         break;
       }
@@ -59,7 +81,7 @@ export function generarSlotsDisponibles(
         motivoNoDisponible: colision ? (colision.motivo || "Ocupado") : undefined,
       });
 
-      // Avanzar al siguiente bloque de 35 min
+      // Avanzar al siguiente bloque
       cursor = slotFin;
     }
   }

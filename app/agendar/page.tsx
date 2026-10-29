@@ -25,7 +25,7 @@ export default function AgendarPage() {
   // Formulario del paciente
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [motivo, setMotivo] = useState("Control de peso y hábitos");
+  const [motivo, setMotivo] = useState("Nutrición clínica (diabetes, tiroides, patologías)");
   const [guardando, setGuardando] = useState(false);
   const [citaConfirmada, setCitaConfirmada] = useState<any>(null);
 
@@ -40,7 +40,7 @@ export default function AgendarPage() {
           setSlots(data.slots);
         }
       } catch (err) {
-        console.error("Error al cargar slots:", err);
+        console.error("Error al cargar horarios:", err);
       } finally {
         setCargandoSlots(false);
       }
@@ -87,9 +87,9 @@ export default function AgendarPage() {
         <div className="w-16 h-16 bg-[#0E3346] text-[#FAF7F2] rounded-2xl border-2 border-[#0E3346] hard-shadow flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="w-10 h-10 text-emerald-400" />
         </div>
-        <h1 className="font-serif-title text-3xl font-bold text-[#0E3346] mb-2">¡Cita Agendada con Éxito!</h1>
-        <p className="text-sm font-mono-tag text-[#0E3346]/80 mb-8">
-          Tu bloque de 35 minutos ha sido registrado en ISOS Nutrición Clínica.
+        <h1 className="font-serif-title text-3xl font-bold text-[#0E3346] mb-2">¡Cita Confirmada con Éxito!</h1>
+        <p className="text-xs sm:text-sm font-mono-tag text-[#0E3346]/80 mb-8">
+          Tu horario ha sido registrado en ISOS Nutrición Clínica.
         </p>
 
         <div className="bg-white border-2 border-[#0E3346] rounded-2xl p-6 text-left hard-shadow mb-8 space-y-3 font-mono-tag text-xs">
@@ -108,10 +108,14 @@ export default function AgendarPage() {
             </span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
-            <span className="text-[#0E3346]/60">Horario (35 min):</span>
+            <span className="text-[#0E3346]/60">Horario:</span>
             <span className="font-bold text-[#D96B43]">
               {slotSeleccionado?.horaInicio} a {slotSeleccionado?.horaFin} hrs
             </span>
+          </div>
+          <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
+            <span className="text-[#0E3346]/60">Motivo:</span>
+            <span className="font-bold text-[#0E3346]">{motivo}</span>
           </div>
           <div className="flex justify-between pt-1">
             <span className="text-[#0E3346]/60">Especialista:</span>
@@ -120,7 +124,7 @@ export default function AgendarPage() {
         </div>
 
         <div className="p-4 bg-[#0E3346] text-[#FAF7F2] border-2 border-[#0E3346] rounded-xl text-xs font-mono-tag mb-8 text-left">
-          📱 <strong>Aviso por WhatsApp:</strong> Recibirás la confirmación y recordatorios preventivos directamente al {telefono}.
+          📱 <strong>Aviso por WhatsApp:</strong> Recibirás la confirmación y recordatorios preventivos a tu número {telefono}.
         </div>
 
         <button
@@ -143,7 +147,7 @@ export default function AgendarPage() {
           ISOS Nutrición Clínica · San José del Cabo
         </span>
         <h1 className="font-serif-title text-3xl sm:text-4xl font-extrabold text-[#0E3346] mt-1">
-          Reserva tu Consulta de 35 Minutos
+          Reserva tu Consulta Nutricional
         </h1>
         <p className="text-xs sm:text-sm text-[#0E3346]/80 mt-1">
           Atención personalizada con la <strong>L.N. Claudia Itzel Chávez García</strong> (Cédula: 15781954).
@@ -164,12 +168,15 @@ export default function AgendarPage() {
               onChange={(e) => setFechaSeleccionada(e.target.value)}
               className="w-full px-4 py-2.5 border-2 border-[#0E3346] rounded-xl font-mono-tag text-sm font-bold text-[#0E3346] bg-[#FAF7F2] focus:outline-none focus:ring-2 focus:ring-[#D96B43]"
             />
+            <p className="text-[11px] font-mono-tag text-[#0E3346]/60 mt-2">
+              Horarios: Lun a Vie (09:00 - 14:00 y 16:00 - 20:00) · Sáb (10:00 - 14:00)
+            </p>
           </div>
 
           <div className="bg-white p-6 rounded-2xl border-2 border-[#0E3346] hard-shadow">
             <label className="block text-xs font-mono-tag uppercase font-bold text-[#0E3346] mb-3 flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#D96B43]" /> 2. Bloques de 35 min Disponibles
+                <Clock className="w-4 h-4 text-[#D96B43]" /> 2. Horarios Disponibles
               </span>
               <span className="text-[11px] font-mono-tag bg-[#FAF7F2] border border-[#0E3346] px-2 py-0.5 rounded">
                 {cargandoSlots ? "Buscando..." : `${slots.filter((s) => s.disponible).length} libres`}
@@ -179,11 +186,11 @@ export default function AgendarPage() {
             {cargandoSlots ? (
               <div className="py-12 flex flex-col items-center justify-center text-[#0E3346]/60 gap-2 font-mono-tag text-xs">
                 <Loader2 className="w-6 h-6 animate-spin text-[#D96B43]" />
-                <span>Calculando disponibilidad en tiempo real...</span>
+                <span>Consultando disponibilidad en tiempo real...</span>
               </div>
             ) : slots.length === 0 ? (
               <div className="p-8 text-center text-[#0E3346]/70 bg-[#FAF7F2] rounded-xl text-xs font-mono-tag border-2 border-dashed border-[#0E3346]/20">
-                No hay atención programada para esta fecha (o el consultorio está cerrado). Por favor selecciona otro día.
+                No hay citas programadas para esta fecha o el consultorio se encuentra cerrado. Por favor selecciona otro día.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -207,7 +214,7 @@ export default function AgendarPage() {
                         {slot.horaInicio} - {slot.horaFin}
                       </span>
                       <span className="text-[9px] mt-0.5 opacity-80">
-                        {slot.disponible ? "Disponible (35 min)" : slot.motivoNoDisponible || "Ocupado"}
+                        {slot.disponible ? "Disponible" : slot.motivoNoDisponible || "Ocupado"}
                       </span>
                     </button>
                   );
@@ -226,7 +233,7 @@ export default function AgendarPage() {
 
             {!slotSeleccionado ? (
               <div className="text-center py-10 px-4 bg-[#FAF7F2] border-2 border-dashed border-[#0E3346]/20 rounded-xl text-[#0E3346]/60 text-xs font-mono-tag">
-                Selecciona un horario disponible de 35 min para completar tus datos.
+                Selecciona un horario disponible para ingresar tus datos.
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 font-mono-tag">
@@ -250,7 +257,7 @@ export default function AgendarPage() {
 
                 <div>
                   <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1 flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-[#D96B43]" /> Teléfono WhatsApp (Para recordatorios)
+                    <Phone className="w-3.5 h-3.5 text-[#D96B43]" /> Teléfono WhatsApp (Para confirmación)
                   </label>
                   <input
                     type="tel"
@@ -264,14 +271,14 @@ export default function AgendarPage() {
 
                 <div>
                   <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
-                    Tipo de Consulta
+                    Motivo de Consulta
                   </label>
                   <select
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
                     className="w-full px-3.5 py-2.5 border-2 border-[#0E3346] rounded-xl text-xs font-sans text-[#0E3346] bg-[#FAF7F2] focus:outline-none"
                   >
-                    <option value="Nutrición clínica (patologías)">Nutrición clínica (diabetes, tiroides, etc.)</option>
+                    <option value="Nutrición clínica (patologías)">Nutrición clínica (diabetes, tiroides, patologías)</option>
                     <option value="Control de peso y composición corporal">Control de peso y composición corporal</option>
                     <option value="Nutrición deportiva">Nutrición deportiva</option>
                     <option value="Consulta de seguimiento">Consulta de seguimiento</option>
@@ -289,7 +296,7 @@ export default function AgendarPage() {
                     </>
                   ) : (
                     <>
-                      Confirmar Cita (35 min) <ArrowRight className="w-4 h-4" />
+                      Confirmar Cita <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
