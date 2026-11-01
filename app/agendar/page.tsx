@@ -30,6 +30,28 @@ export default function AgendarPage() {
   const [guardando, setGuardando] = useState(false);
   const [citaConfirmada, setCitaConfirmada] = useState<any>(null);
 
+  // Perfil dinámico de la clínica desde la base de datos
+  const [perfilClinica, setPerfilClinica] = useState({
+    nombreDoctora: "L.N. Claudia Itzel Chávez García",
+    cedula: "15781954",
+    nombreClinica: "ISOS Nutrición Clínica",
+    telefonoWhatsapp: "6241220715",
+    direccion: "s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal",
+    ciudad: "San José del Cabo",
+    estado: "B.C.S.",
+    horarioLunVie: "09:00 - 14:00 y 16:00 - 20:00",
+    horarioSab: "10:00 - 14:00",
+  });
+
+  useEffect(() => {
+    fetch("/api/configuracion")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.perfil) setPerfilClinica(data.perfil);
+      })
+      .catch((err) => console.warn("Error cargando perfil clínica:", err));
+  }, []);
+
   // Cargar slots disponibles para la fecha seleccionada
   async function cargarSlots(fecha: string) {
     setCargandoSlots(true);
@@ -101,7 +123,7 @@ export default function AgendarPage() {
   }
 
   if (citaConfirmada) {
-    const textoMensajeOficial = `¡Hola! Mi cita en ISOS Nutrición Clínica ha sido confirmada en el calendario del consultorio:\n\n👤 Paciente: ${citaConfirmada.nombrePaciente}\n📅 Fecha: ${citaConfirmada.fechaTexto}\n⏰ Horario: ${citaConfirmada.horarioTexto}\n🎯 Motivo: ${citaConfirmada.motivoTexto}\n📍 Consultorio: San José del Cabo, B.C.S.\n\n(Se me recordará 1 día antes y 1 hora antes de la cita por SMS y WhatsApp)`;
+    const textoMensajeOficial = `¡Hola! Mi cita en ${perfilClinica.nombreClinica} ha sido confirmada en el calendario del consultorio:\n\n👤 Paciente: ${citaConfirmada.nombrePaciente}\n📅 Fecha: ${citaConfirmada.fechaTexto}\n⏰ Horario: ${citaConfirmada.horarioTexto}\n🎯 Motivo: ${citaConfirmada.motivoTexto}\n📍 Consultorio: ${perfilClinica.ciudad}, ${perfilClinica.estado}\n\n(Se me recordará 1 día antes y 1 hora antes de la cita por SMS y WhatsApp)`;
 
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
@@ -140,7 +162,7 @@ export default function AgendarPage() {
           </div>
           <div className="flex justify-between pt-1">
             <span className="text-[#0E3346]/60">Especialista:</span>
-            <span className="font-bold text-[#0E3346]">L.N. Claudia Itzel Chávez García</span>
+            <span className="font-bold text-[#0E3346]">{perfilClinica.nombreDoctora} (Cédula: {perfilClinica.cedula})</span>
           </div>
         </div>
 
@@ -174,7 +196,7 @@ export default function AgendarPage() {
 
           <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row gap-2.5">
             <a
-              href={`https://wa.me/526241220715?text=${encodeURIComponent(textoMensajeOficial)}`}
+              href={crearLinkWhatsApp(perfilClinica.telefonoWhatsapp, textoMensajeOficial)}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition border border-emerald-500 hard-shadow-sm"
@@ -183,9 +205,10 @@ export default function AgendarPage() {
             </a>
 
             <a
-              href={`sms:6241220715?body=${encodeURIComponent(
-                `Cita confirmada en calendario de ISOS Nutrición: ${citaConfirmada.nombrePaciente} el ${citaConfirmada.fechaTexto} a las ${citaConfirmada.horarioTexto}. Recordatorios programados 1 día antes y 1 hora antes.`
-              )}`}
+              href={crearLinkSMS(
+                perfilClinica.telefonoWhatsapp,
+                `Cita confirmada en ${perfilClinica.nombreClinica}: ${citaConfirmada.nombrePaciente} el ${citaConfirmada.fechaTexto} a las ${citaConfirmada.horarioTexto}. Recordatorios programados 1 día antes y 1 hora antes.`
+              )}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-center"
             >
               💬 Enviar confirmación por SMS
@@ -213,13 +236,13 @@ export default function AgendarPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="mb-8">
         <span className="text-xs font-mono-tag uppercase tracking-widest text-[#D96B43] font-bold">
-          ISOS Nutrición Clínica · San José del Cabo
+          {perfilClinica.nombreClinica} · {perfilClinica.ciudad}
         </span>
         <h1 className="font-serif-title text-3xl sm:text-4xl font-extrabold text-[#0E3346] mt-1">
           Reserva tu Consulta Nutricional
         </h1>
         <p className="text-xs sm:text-sm text-[#0E3346]/80 mt-1">
-          Atención personalizada con la <strong>L.N. Claudia Itzel Chávez García</strong> (Cédula: 15781954).
+          Atención personalizada con la <strong>{perfilClinica.nombreDoctora}</strong> (Cédula: {perfilClinica.cedula}).
         </p>
       </div>
 
@@ -238,7 +261,7 @@ export default function AgendarPage() {
               className="w-full px-4 py-2.5 border-2 border-[#0E3346] rounded-xl font-mono-tag text-sm font-bold text-[#0E3346] bg-[#FAF7F2] focus:outline-none focus:ring-2 focus:ring-[#D96B43]"
             />
             <p className="text-[11px] font-mono-tag text-[#0E3346]/60 mt-2">
-              Horarios: Lun a Vie (09:00 - 14:00 y 16:00 - 20:00) · Sáb (10:00 - 14:00)
+              Horarios: Lun a Vie ({perfilClinica.horarioLunVie}) · Sáb ({perfilClinica.horarioSab})
             </p>
           </div>
 

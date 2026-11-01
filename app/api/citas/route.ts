@@ -11,6 +11,7 @@ import {
   generarMensajeRecordatorio24h,
   generarMensajeRecordatorio1h,
 } from "@/lib/notificaciones";
+import { obtenerPerfilClinica } from "@/lib/perfil";
 import {
   startOfWeek,
   endOfWeek,
@@ -238,12 +239,13 @@ export async function POST(req: NextRequest) {
     // 3) Recordatorio preventivo 1 hora antes de la cita
     let notificacionesCreadas: any[] = [];
     try {
+      const perfilClinica = await obtenerPerfilClinica();
       const fechaTexto = format(inicio, "EEEE d 'de' MMMM, yyyy", { locale: es });
       const horarioTexto = `${format(inicio, "HH:mm")} a ${format(fin, "HH:mm")} hrs`;
 
-      const msgConfirmacion = generarMensajeConfirmacion(nombre, fechaTexto, horarioTexto);
-      const msg24h = generarMensajeRecordatorio24h(nombre, fechaTexto, horarioTexto);
-      const msg1h = generarMensajeRecordatorio1h(nombre, horarioTexto);
+      const msgConfirmacion = generarMensajeConfirmacion(nombre, fechaTexto, horarioTexto, perfilClinica);
+      const msg24h = generarMensajeRecordatorio24h(nombre, fechaTexto, horarioTexto, perfilClinica);
+      const msg1h = generarMensajeRecordatorio1h(nombre, horarioTexto, perfilClinica);
 
       // Programación de fechas
       const fechaProgConfirmacion = new Date();

@@ -95,3 +95,26 @@ model Notificacion {
 
   @@map("notificaciones")
 }
+
+model PerfilClinica {
+  id                Int      @id @default(1)
+  nombreDoctora     String   @default("L.N. Claudia Itzel Chávez García")
+  tituloProfesional String   @default("Licenciada en Nutrición Clínica")
+  cedula            String   @default("15781954")
+  nombreClinica     String   @default("ISOS Nutrición Clínica")
+  telefonoWhatsapp  String   @default("6241220715")
+  email             String   @default("isosnutricion@gmail.com")
+  direccion         String   @default("s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal")
+  colonia           String   @default("Col. El Chamizal")
+  codigoPostal      String   @default("23405")
+  ciudad            String   @default("San José del Cabo")
+  estado            String   @default("Baja California Sur")
+  duracionCitaMin   Int      @default(35)
+  horarioLunVie     String   @default("09:00 - 14:00 y 16:00 - 20:00")
+  horarioSab        String   @default("10:00 - 14:00")
+  horarioDom        String   @default("Cerrado")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("perfil_clinica")
+}

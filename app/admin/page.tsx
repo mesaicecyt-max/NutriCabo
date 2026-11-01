@@ -26,6 +26,7 @@ import {
   Bell,
   Smartphone,
   Send,
+  Settings,
 } from "lucide-react";
 import {
   generarMensajeConfirmacion,
@@ -78,6 +79,27 @@ export default function AdminPage() {
   // Modal Notificaciones Multicanal (SMS y WhatsApp)
   const [citaParaNotificar, setCitaParaNotificar] = useState<Cita | null>(null);
 
+  // Configuración y Datos de la Nutrióloga / Consultorio (en Base de Datos)
+  const [modalPerfilAbierto, setModalPerfilAbierto] = useState(false);
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false);
+  const [perfilForm, setPerfilForm] = useState({
+    nombreDoctora: "L.N. Claudia Itzel Chávez García",
+    tituloProfesional: "Licenciada en Nutrición Clínica",
+    cedula: "15781954",
+    nombreClinica: "ISOS Nutrición Clínica",
+    telefonoWhatsapp: "6241220715",
+    email: "isosnutricion@gmail.com",
+    direccion: "s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal",
+    colonia: "Col. El Chamizal",
+    codigoPostal: "23405",
+    ciudad: "San José del Cabo",
+    estado: "Baja California Sur",
+    duracionCitaMin: 35,
+    horarioLunVie: "09:00 - 14:00 y 16:00 - 20:00",
+    horarioSab: "10:00 - 14:00",
+    horarioDom: "Cerrado",
+  });
+
   // Opciones de motivo idénticas a las del cliente
   const motivosDisponibles = [
     "Nutrición clínica (patologías)",
@@ -111,6 +133,44 @@ export default function AdminPage() {
     setAutenticado(false);
   }
 
+  // Cargar datos del perfil de la clínica desde la base de datos
+  async function cargarPerfil() {
+    try {
+      const res = await fetch("/api/configuracion");
+      const data = await res.json();
+      if (data?.perfil) {
+        setPerfilForm(data.perfil);
+      }
+    } catch (e) {
+      console.warn("Error cargando perfil:", e);
+    }
+  }
+
+  // Guardar datos editados del consultorio en la base de datos
+  async function handleGuardarPerfil(e: React.FormEvent) {
+    e.preventDefault();
+    setGuardandoPerfil(true);
+    try {
+      const res = await fetch("/api/configuracion", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(perfilForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("¡Datos del consultorio y nutrióloga actualizados exitosamente en la base de datos!");
+        setModalPerfilAbierto(false);
+      } else {
+        alert(data.error || "Error al actualizar la configuración.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión al guardar los datos.");
+    } finally {
+      setGuardandoPerfil(false);
+    }
+  }
+
   // Cargar citas y métricas
   async function cargarDatos() {
     setCargando(true);
@@ -133,6 +193,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (autenticado) {
       cargarDatos();
+      cargarPerfil();
     }
   }, [autenticado, fechaFiltro, vista]);
 
@@ -294,9 +355,9 @@ export default function AdminPage() {
           <div className="flex items-center gap-4">
             <img src="/logo-isos.png" alt="ISOS Logo" className="h-16 w-auto object-contain" />
             <div>
-              <h1 className="text-xl font-bold">ISOS Nutrición Clínica</h1>
-              <p className="text-xs">L.N. Claudia Itzel Chávez García · Cédula Profesional: 15781954</p>
-              <p className="text-xs">Col. El Chamizal, San José del Cabo, B.C.S. · Tel: 624-122-0715</p>
+              <h1 className="text-xl font-bold">{perfilForm.nombreClinica}</h1>
+              <p className="text-xs">{perfilForm.nombreDoctora} · Cédula Profesional: {perfilForm.cedula}</p>
+              <p className="text-xs">{perfilForm.direccion}, {perfilForm.ciudad}, {perfilForm.estado} · Tel: {perfilForm.telefonoWhatsapp}</p>
             </div>
           </div>
           <div className="text-right">
@@ -362,6 +423,15 @@ export default function AdminPage() {
             >
               <Printer className="w-4 h-4 text-[#D96B43]" />
               Descargar Reporte PDF
+            </button>
+
+            <button
+              onClick={() => setModalPerfilAbierto(true)}
+              className="px-4 py-2.5 bg-white hover:bg-[#FAF7F2] text-[#0E3346] text-xs font-mono-tag font-bold rounded-xl border-2 border-[#0E3346] hard-shadow-sm flex items-center gap-2 transition"
+              title="Configurar datos de la nutrióloga, cédula, dirección, teléfono y horarios en base de datos"
+            >
+              <Settings className="w-4 h-4 text-[#D96B43]" />
+              Datos Consultorio
             </button>
 
             <button
@@ -566,7 +636,8 @@ export default function AdminPage() {
                             generarMensajeConfirmacion(
                               cita.paciente.nombre,
                               format(inicio, "EEEE d 'de' MMMM, yyyy", { locale: es }),
-                              `${format(inicio, "HH:mm")} a ${format(fin, "HH:mm")} hrs`
+                              `${format(inicio, "HH:mm")} a ${format(fin, "HH:mm")} hrs`,
+                              perfilForm
                             )
                           )}
                           target="_blank"
@@ -751,16 +822,19 @@ export default function AdminPage() {
         const msgConfirmacion = generarMensajeConfirmacion(
           citaParaNotificar.paciente.nombre,
           fechaTexto,
-          horarioTexto
+          horarioTexto,
+          perfilForm
         );
         const msg24h = generarMensajeRecordatorio24h(
           citaParaNotificar.paciente.nombre,
           fechaTexto,
-          horarioTexto
+          horarioTexto,
+          perfilForm
         );
         const msg1h = generarMensajeRecordatorio1h(
           citaParaNotificar.paciente.nombre,
-          horarioTexto
+          horarioTexto,
+          perfilForm
         );
 
         const waConfirmacion = crearLinkWhatsApp(citaParaNotificar.paciente.telefonoWhatsapp, msgConfirmacion);
@@ -916,6 +990,242 @@ export default function AdminPage() {
           </div>
         );
       })()}
+
+      {/* MODAL CONFIGURACIÓN Y PERFIL DE LA CLÍNICA (Base de Datos) */}
+      {modalPerfilAbierto && (
+        <div className="fixed inset-0 bg-[#0E3346]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 font-mono-tag">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 border-2 border-[#0E3346] hard-shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4 border-b-2 border-[#0E3346]/10 pb-3">
+              <div>
+                <h3 className="font-serif-title text-2xl font-bold text-[#0E3346] flex items-center gap-2">
+                  <Settings className="w-6 h-6 text-[#D96B43]" /> Datos del Consultorio y Nutrióloga
+                </h3>
+                <p className="text-xs text-[#0E3346]/70 mt-1">
+                  Todos los campos se guardan en la base de datos (PostgreSQL en Supabase) y se actualizan en tiempo real en la web, mensajes y reportes.
+                </p>
+              </div>
+              <button
+                onClick={() => setModalPerfilAbierto(false)}
+                className="p-1.5 hover:bg-slate-100 rounded-xl text-[#0E3346]/60 hover:text-[#0E3346]"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarPerfil} className="space-y-6">
+              {/* Bloque 1: Datos Profesionales */}
+              <div>
+                <h4 className="text-xs uppercase font-extrabold text-[#D96B43] tracking-wider mb-3 flex items-center gap-1.5">
+                  <User className="w-4 h-4" /> 1. Datos de la Especialista
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Nombre Completo
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.nombreDoctora}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, nombreDoctora: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Cédula Profesional / Certificado
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.cedula}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, cedula: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Título o Grado Académico
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.tituloProfesional}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, tituloProfesional: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloque 2: Consultorio y Contacto */}
+              <div className="pt-2 border-t border-[#0E3346]/10">
+                <h4 className="text-xs uppercase font-extrabold text-[#D96B43] tracking-wider mb-3 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" /> 2. Consultorio y Ubicación
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Nombre del Consultorio / Clínica
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.nombreClinica}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, nombreClinica: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Teléfono Móvil / WhatsApp de Atención
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.telefonoWhatsapp}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, telefonoWhatsapp: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Dirección Completa
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.direccion}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, direccion: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Colonia / Fraccionamiento
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.colonia}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, colonia: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Código Postal
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.codigoPostal}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, codigoPostal: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Ciudad
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.ciudad}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, ciudad: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Estado
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={perfilForm.estado}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, estado: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloque 3: Horarios de Atención */}
+              <div className="pt-2 border-t border-[#0E3346]/10">
+                <h4 className="text-xs uppercase font-extrabold text-[#D96B43] tracking-wider mb-3 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" /> 3. Horarios y Tiempos de Consulta
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Lunes a Viernes
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.horarioLunVie}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, horarioLunVie: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Sábado
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.horarioSab}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, horarioSab: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1">
+                      Domingo
+                    </label>
+                    <input
+                      type="text"
+                      value={perfilForm.horarioDom}
+                      onChange={(e) => setPerfilForm({ ...perfilForm, horarioDom: e.target.value })}
+                      className="w-full px-3 py-2 border-2 border-[#0E3346] rounded-xl text-xs bg-[#FAF7F2] font-sans"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t-2 border-[#0E3346]/10">
+                <button
+                  type="button"
+                  onClick={() => setModalPerfilAbierto(false)}
+                  className="px-5 py-2.5 text-xs font-bold text-[#0E3346] hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoPerfil}
+                  className="px-6 py-2.5 bg-[#D96B43] hover:bg-[#c45a33] text-white text-xs font-extrabold uppercase rounded-xl border-2 border-[#0E3346] hard-shadow flex items-center gap-2 transition"
+                >
+                  {guardandoPerfil ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Guardando en BD...
+                    </>
+                  ) : (
+                    "Guardar Cambios en Base de Datos"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
