@@ -224,14 +224,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 4. Notificación de confirmación
+    // 4. Notificación de confirmación (SMS y WhatsApp)
     try {
       await prisma.notificacion.create({
         data: {
           citaId: citaCreada.id,
           tipo: "CONFIRMACION",
           destinatario: telefonoWhatsapp,
-          mensaje: `¡Hola ${nombre}! Tu consulta en ISOS Nutrición Clínica ha sido confirmada.`,
+          mensaje: `¡Hola ${nombre}! Tu consulta en ISOS Nutrición Clínica ha sido confirmada para el ${inicio.toLocaleString()}. Canal: SMS y WhatsApp.`,
           fechaProgramada: new Date(),
         },
       });

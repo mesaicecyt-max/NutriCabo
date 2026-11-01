@@ -116,7 +116,7 @@ export default function AgendarPage() {
             <span className="font-bold text-[#0E3346]">{citaConfirmada.nombrePaciente}</span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
-            <span className="text-[#0E3346]/60">WhatsApp:</span>
+            <span className="text-[#0E3346]/60">Teléfono (SMS / WhatsApp):</span>
             <span className="font-bold text-[#0E3346]">{citaConfirmada.telefonoPaciente}</span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
@@ -141,8 +141,40 @@ export default function AgendarPage() {
           </div>
         </div>
 
-        <div className="p-4 bg-[#0E3346] text-[#FAF7F2] border-2 border-[#0E3346] rounded-xl text-xs font-mono-tag mb-8 text-left">
-          📱 <strong>Aviso por WhatsApp:</strong> Recibirás la confirmación y recordatorios preventivos a tu número {citaConfirmada.telefonoPaciente}.
+        <div className="p-5 bg-[#0E3346] text-[#FAF7F2] border-2 border-[#0E3346] rounded-2xl hard-shadow mb-8 text-left space-y-3 font-mono-tag">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">📲</span>
+            <div>
+              <p className="font-bold text-white text-xs mb-1">
+                Confirmación y Recordatorios por SMS y WhatsApp:
+              </p>
+              <p className="text-[#FAF7F2]/80 text-[11px] leading-relaxed">
+                Hemos registrado tu número <strong>{citaConfirmada.telefonoPaciente}</strong> para enviarte la confirmación y recordatorios preventivos antes de tu consulta por SMS y WhatsApp.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2.5">
+            <a
+              href={`https://wa.me/526241220715?text=${encodeURIComponent(
+                `¡Hola L.N. Claudia! Acabo de registrar mi cita en ISOS Nutrición Clínica:\n👤 Paciente: ${citaConfirmada.nombrePaciente}\n📅 Fecha: ${citaConfirmada.fechaTexto}\n⏰ Horario: ${citaConfirmada.horarioTexto}\n🎯 Motivo: ${citaConfirmada.motivoTexto}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition border border-emerald-500 hard-shadow-sm"
+            >
+              <MessageSquare className="w-3.5 h-3.5" /> Enviar confirmación por WhatsApp
+            </a>
+
+            <a
+              href={`sms:6241220715?body=${encodeURIComponent(
+                `Cita confirmada en ISOS Nutrición: ${citaConfirmada.nombrePaciente} el ${citaConfirmada.fechaTexto} a las ${citaConfirmada.horarioTexto}`
+              )}`}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-center"
+            >
+              ✉️ Enviar SMS de respaldo
+            </a>
+          </div>
         </div>
 
         <button
@@ -278,7 +310,7 @@ export default function AgendarPage() {
 
                 <div>
                   <label className="block text-[11px] uppercase font-bold text-[#0E3346] mb-1 flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-[#D96B43]" /> Teléfono WhatsApp (Para confirmación)
+                    <Phone className="w-3.5 h-3.5 text-[#D96B43]" /> Teléfono Móvil (Confirmación por SMS y WhatsApp)
                   </label>
                   <input
                     type="tel"
