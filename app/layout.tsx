@@ -131,7 +131,17 @@ export default function RootLayout({
 
             <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-[#0E3346]/60 font-mono-tag gap-2">
               <p>© {new Date().getFullYear()} ISOS Nutrición Clínica · San José del Cabo, B.C.S.</p>
-              <p>Atención previa cita</p>
+              <div className="flex items-center gap-4">
+                <p>Atención previa cita</p>
+                <span>·</span>
+                <a
+                  href="/admin"
+                  className="text-[11px] text-[#0E3346]/50 hover:text-[#D96B43] hover:underline transition flex items-center gap-1"
+                  title="Acceso exclusivo para la nutrióloga y personal del consultorio"
+                >
+                  🔒 Panel Médico
+                </a>
+              </div>
             </div>
           </div>
         </footer>
