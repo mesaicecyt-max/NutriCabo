@@ -23,6 +23,7 @@ enum OrigenCita {
 enum TipoNotificacion {
   CONFIRMACION
   RECORDATORIO_24H
+  RECORDATORIO_1H
   RECORDATORIO_2H
   CANCELACION
 }

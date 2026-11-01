@@ -7,12 +7,19 @@ import {
   TIMEZONE_OFFSET_CLINICA,
 } from "@/lib/slots";
 import {
+  generarMensajeConfirmacion,
+  generarMensajeRecordatorio24h,
+  generarMensajeRecordatorio1h,
+} from "@/lib/notificaciones";
+import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
   endOfMonth,
   addMinutes,
+  format,
 } from "date-fns";
+import { es } from "date-fns/locale";
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,6 +56,7 @@ export async function GET(req: NextRequest) {
         },
         include: {
           paciente: true,
+          notificaciones: true,
         },
         orderBy: {
           fechaHoraInicio: "asc",
@@ -224,24 +232,64 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 4. Notificación de confirmación (SMS y WhatsApp)
+    // 4. Registrar los 3 niveles de notificaciones multicanal (SMS y WhatsApp):
+    // 1) Confirmación inmediata de que la cita fue confirmada en el calendario del consultorio
+    // 2) Recordatorio preventivo 1 día antes (24 horas)
+    // 3) Recordatorio preventivo 1 hora antes de la cita
+    let notificacionesCreadas: any[] = [];
     try {
-      await prisma.notificacion.create({
-        data: {
-          citaId: citaCreada.id,
-          tipo: "CONFIRMACION",
-          destinatario: telefonoWhatsapp,
-          mensaje: `¡Hola ${nombre}! Tu consulta en ISOS Nutrición Clínica ha sido confirmada para el ${inicio.toLocaleString()}. Canal: SMS y WhatsApp.`,
-          fechaProgramada: new Date(),
-        },
-      });
+      const fechaTexto = format(inicio, "EEEE d 'de' MMMM, yyyy", { locale: es });
+      const horarioTexto = `${format(inicio, "HH:mm")} a ${format(fin, "HH:mm")} hrs`;
+
+      const msgConfirmacion = generarMensajeConfirmacion(nombre, fechaTexto, horarioTexto);
+      const msg24h = generarMensajeRecordatorio24h(nombre, fechaTexto, horarioTexto);
+      const msg1h = generarMensajeRecordatorio1h(nombre, horarioTexto);
+
+      // Programación de fechas
+      const fechaProgConfirmacion = new Date();
+      const fechaProg24h = new Date(inicio.getTime() - 24 * 60 * 60 * 1000);
+      const fechaProg1h = new Date(inicio.getTime() - 60 * 60 * 1000);
+
+      const [n1, n2, n3] = await Promise.all([
+        prisma.notificacion.create({
+          data: {
+            citaId: citaCreada.id,
+            tipo: "CONFIRMACION",
+            destinatario: telefonoWhatsapp,
+            mensaje: msgConfirmacion,
+            fechaProgramada: fechaProgConfirmacion,
+          },
+        }),
+        prisma.notificacion.create({
+          data: {
+            citaId: citaCreada.id,
+            tipo: "RECORDATORIO_24H",
+            destinatario: telefonoWhatsapp,
+            mensaje: msg24h,
+            fechaProgramada: fechaProg24h,
+          },
+        }),
+        prisma.notificacion.create({
+          data: {
+            citaId: citaCreada.id,
+            tipo: "RECORDATORIO_1H",
+            destinatario: telefonoWhatsapp,
+            mensaje: msg1h,
+            fechaProgramada: fechaProg1h,
+          },
+        }),
+      ]);
+      notificacionesCreadas = [n1, n2, n3];
     } catch (notifErr) {
       console.warn("No se pudo guardar la notificación en DB:", notifErr);
     }
 
     return NextResponse.json({
-      mensaje: "Cita registrada exitosamente.",
-      cita: citaCreada,
+      mensaje: "Cita registrada y confirmada en el calendario del consultorio.",
+      cita: {
+        ...citaCreada,
+        notificaciones: notificacionesCreadas,
+      },
     });
   } catch (error: any) {
     console.error("Error en POST /api/citas:", error);

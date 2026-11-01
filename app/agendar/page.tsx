@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, CheckCircle2, ArrowRight, Loader2, MessageSquare } from "lucide-react";
+import { Calendar, Clock, User, Phone, CheckCircle2, ArrowRight, Loader2, MessageSquare, Bell, Smartphone } from "lucide-react";
+import { crearLinkWhatsApp, crearLinkSMS, generarMensajeConfirmacion } from "@/lib/notificaciones";
 
 interface Slot {
   horaInicio: string;
@@ -100,17 +101,19 @@ export default function AgendarPage() {
   }
 
   if (citaConfirmada) {
+    const textoMensajeOficial = `¡Hola! Mi cita en ISOS Nutrición Clínica ha sido confirmada en el calendario del consultorio:\n\n👤 Paciente: ${citaConfirmada.nombrePaciente}\n📅 Fecha: ${citaConfirmada.fechaTexto}\n⏰ Horario: ${citaConfirmada.horarioTexto}\n🎯 Motivo: ${citaConfirmada.motivoTexto}\n📍 Consultorio: San José del Cabo, B.C.S.\n\n(Se me recordará 1 día antes y 1 hora antes de la cita por SMS y WhatsApp)`;
+
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <div className="w-16 h-16 bg-[#0E3346] text-[#FAF7F2] rounded-2xl border-2 border-[#0E3346] hard-shadow flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="w-10 h-10 text-emerald-400" />
         </div>
-        <h1 className="font-serif-title text-3xl font-bold text-[#0E3346] mb-2">¡Cita Confirmada con Éxito!</h1>
+        <h1 className="font-serif-title text-3xl font-bold text-[#0E3346] mb-2">¡Cita Confirmada en el Calendario!</h1>
         <p className="text-xs sm:text-sm font-mono-tag text-[#0E3346]/80 mb-8">
-          Tu horario ha sido registrado en ISOS Nutrición Clínica.
+          Tu horario ha sido registrado y asegurado oficialmente en el consultorio.
         </p>
 
-        <div className="bg-white border-2 border-[#0E3346] rounded-2xl p-6 text-left hard-shadow mb-8 space-y-3 font-mono-tag text-xs">
+        <div className="bg-white border-2 border-[#0E3346] rounded-2xl p-6 text-left hard-shadow mb-6 space-y-3 font-mono-tag text-xs">
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">Paciente:</span>
             <span className="font-bold text-[#0E3346]">{citaConfirmada.nombrePaciente}</span>
@@ -141,24 +144,37 @@ export default function AgendarPage() {
           </div>
         </div>
 
+        {/* Notificación y Recordatorios (1 Día Antes y 1 Hora Antes) */}
         <div className="p-5 bg-[#0E3346] text-[#FAF7F2] border-2 border-[#0E3346] rounded-2xl hard-shadow mb-8 text-left space-y-3 font-mono-tag">
           <div className="flex items-start gap-3">
-            <span className="text-xl">📲</span>
+            <div className="p-2 bg-white/10 rounded-xl text-[#FAF7F2] mt-0.5">
+              <Smartphone className="w-5 h-5 text-emerald-400" />
+            </div>
             <div>
               <p className="font-bold text-white text-xs mb-1">
-                Confirmación y Recordatorios por SMS y WhatsApp:
+                Aviso de Notificaciones por SMS y WhatsApp:
               </p>
-              <p className="text-[#FAF7F2]/80 text-[11px] leading-relaxed">
-                Hemos registrado tu número <strong>{citaConfirmada.telefonoPaciente}</strong> para enviarte la confirmación y recordatorios preventivos antes de tu consulta por SMS y WhatsApp.
+              <p className="text-[#FAF7F2]/90 text-[11px] leading-relaxed">
+                Tu cita fue confirmada en el calendario del consultorio. Se te recordará <strong>1 día antes</strong> y <strong>1 hora antes</strong> de la cita por este mismo medio a tu número <strong>{citaConfirmada.telefonoPaciente}</strong>.
               </p>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2.5">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] space-y-1.5 text-slate-200">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold">
+              <span>✓</span> Cita confirmada en el calendario del consultorio
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <span>⏰</span> Recordatorio preventivo: 1 día antes (24h) por SMS y WhatsApp
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <span>⚡</span> Recordatorio final: 1 hora antes de la consulta por SMS y WhatsApp
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row gap-2.5">
             <a
-              href={`https://wa.me/526241220715?text=${encodeURIComponent(
-                `¡Hola L.N. Claudia! Acabo de registrar mi cita en ISOS Nutrición Clínica:\n👤 Paciente: ${citaConfirmada.nombrePaciente}\n📅 Fecha: ${citaConfirmada.fechaTexto}\n⏰ Horario: ${citaConfirmada.horarioTexto}\n🎯 Motivo: ${citaConfirmada.motivoTexto}`
-              )}`}
+              href={`https://wa.me/526241220715?text=${encodeURIComponent(textoMensajeOficial)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition border border-emerald-500 hard-shadow-sm"
@@ -168,11 +184,11 @@ export default function AgendarPage() {
 
             <a
               href={`sms:6241220715?body=${encodeURIComponent(
-                `Cita confirmada en ISOS Nutrición: ${citaConfirmada.nombrePaciente} el ${citaConfirmada.fechaTexto} a las ${citaConfirmada.horarioTexto}`
+                `Cita confirmada en calendario de ISOS Nutrición: ${citaConfirmada.nombrePaciente} el ${citaConfirmada.fechaTexto} a las ${citaConfirmada.horarioTexto}. Recordatorios programados 1 día antes y 1 hora antes.`
               )}`}
               className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-center"
             >
-              ✉️ Enviar SMS de respaldo
+              💬 Enviar confirmación por SMS
             </a>
           </div>
         </div>

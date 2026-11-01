@@ -23,7 +23,17 @@ import {
   CalendarDays,
   CalendarRange,
   FileSpreadsheet,
+  Bell,
+  Smartphone,
+  Send,
 } from "lucide-react";
+import {
+  generarMensajeConfirmacion,
+  generarMensajeRecordatorio24h,
+  generarMensajeRecordatorio1h,
+  crearLinkWhatsApp,
+  crearLinkSMS,
+} from "@/lib/notificaciones";
 
 interface Cita {
   id: number;
@@ -64,6 +74,9 @@ export default function AdminPage() {
   const [citaParaReprogramar, setCitaParaReprogramar] = useState<Cita | null>(null);
   const [cambioNuevaFecha, setCambioNuevaFecha] = useState("");
   const [cambioNuevaHora, setCambioNuevaHora] = useState("");
+
+  // Modal Notificaciones Multicanal (SMS y WhatsApp)
+  const [citaParaNotificar, setCitaParaNotificar] = useState<Cita | null>(null);
 
   // Opciones de motivo idénticas a las del cliente
   const motivosDisponibles = [
@@ -535,13 +548,31 @@ export default function AdminPage() {
                     </div>
 
                     {!esCancelada && (
-                      <div className="flex items-center gap-2 self-end sm:self-center font-mono-tag">
+                      <div className="flex items-center gap-2 self-end sm:self-center font-mono-tag flex-wrap sm:flex-nowrap">
+                        {/* BOTÓN GESTIÓN DE NOTIFICACIONES MULTICANAL (SMS y WhatsApp) */}
+                        <button
+                          onClick={() => setCitaParaNotificar(cita)}
+                          className="px-2.5 py-1.5 border-2 border-[#0E3346] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg hard-shadow-sm flex items-center gap-1.5 transition"
+                          title="Gestionar avisos de Confirmación, Recordatorio 24h y Recordatorio 1h por SMS y WhatsApp"
+                        >
+                          <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Notificar</span>
+                        </button>
+
+                        {/* ACCESO DIRECTO WHATSAPP CON CONFIRMACIÓN OFICIAL */}
                         <a
-                          href={`https://wa.me/${cita.paciente.telefonoWhatsapp.replace(/\D/g, "")}`}
+                          href={crearLinkWhatsApp(
+                            cita.paciente.telefonoWhatsapp,
+                            generarMensajeConfirmacion(
+                              cita.paciente.nombre,
+                              format(inicio, "EEEE d 'de' MMMM, yyyy", { locale: es }),
+                              `${format(inicio, "HH:mm")} a ${format(fin, "HH:mm")} hrs`
+                            )
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-300 transition"
-                          title="Abrir WhatsApp con el paciente"
+                          title="Abrir WhatsApp con mensaje de confirmación oficial"
                         >
                           <MessageSquare className="w-4 h-4" />
                         </a>
@@ -709,6 +740,182 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL NOTIFICACIONES MULTICANAL (SMS y WhatsApp) */}
+      {citaParaNotificar && (() => {
+        const inicioNotif = new Date(citaParaNotificar.fechaHoraInicio);
+        const finNotif = new Date(citaParaNotificar.fechaHoraFin);
+        const fechaTexto = format(inicioNotif, "EEEE d 'de' MMMM, yyyy", { locale: es });
+        const horarioTexto = `${format(inicioNotif, "HH:mm")} a ${format(finNotif, "HH:mm")} hrs`;
+
+        const msgConfirmacion = generarMensajeConfirmacion(
+          citaParaNotificar.paciente.nombre,
+          fechaTexto,
+          horarioTexto
+        );
+        const msg24h = generarMensajeRecordatorio24h(
+          citaParaNotificar.paciente.nombre,
+          fechaTexto,
+          horarioTexto
+        );
+        const msg1h = generarMensajeRecordatorio1h(
+          citaParaNotificar.paciente.nombre,
+          horarioTexto
+        );
+
+        const waConfirmacion = crearLinkWhatsApp(citaParaNotificar.paciente.telefonoWhatsapp, msgConfirmacion);
+        const smsConfirmacion = crearLinkSMS(citaParaNotificar.paciente.telefonoWhatsapp, msgConfirmacion);
+
+        const wa24h = crearLinkWhatsApp(citaParaNotificar.paciente.telefonoWhatsapp, msg24h);
+        const sms24h = crearLinkSMS(citaParaNotificar.paciente.telefonoWhatsapp, msg24h);
+
+        const wa1h = crearLinkWhatsApp(citaParaNotificar.paciente.telefonoWhatsapp, msg1h);
+        const sms1h = crearLinkSMS(citaParaNotificar.paciente.telefonoWhatsapp, msg1h);
+
+        return (
+          <div className="fixed inset-0 bg-[#0E3346]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 font-mono-tag">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 border-2 border-[#0E3346] hard-shadow-lg max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-serif-title text-xl font-bold text-[#0E3346] flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-emerald-600" /> Notificaciones Multicanal
+                  </h3>
+                  <p className="text-xs text-[#0E3346]/70 mt-0.5">
+                    Envío directo de avisos por SMS y WhatsApp para el paciente.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCitaParaNotificar(null)}
+                  className="p-1 hover:bg-slate-100 rounded-lg text-[#0E3346]/60 hover:text-[#0E3346]"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Ficha rápida de la cita */}
+              <div className="p-3 bg-[#FAF7F2] border-2 border-[#0E3346] rounded-xl text-xs space-y-1 mb-4">
+                <div className="flex justify-between">
+                  <span className="text-[#0E3346]/60">Paciente:</span>
+                  <strong className="text-[#0E3346]">{citaParaNotificar.paciente.nombre}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#0E3346]/60">Teléfono:</span>
+                  <strong className="text-[#0E3346]">{citaParaNotificar.paciente.telefonoWhatsapp}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#0E3346]/60">Cita:</span>
+                  <strong className="text-[#D96B43] capitalize">{fechaTexto} ({horarioTexto})</strong>
+                </div>
+              </div>
+
+              <div className="space-y-3.5">
+                {/* 1. Confirmación de Cita en Calendario */}
+                <div className="border-2 border-[#0E3346] rounded-xl p-3.5 bg-white">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs text-[#0E3346] flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" /> 1. Confirmación en Calendario
+                    </span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">
+                      Inmediato
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#0E3346]/70 mb-2 leading-relaxed">
+                    Aviso confirmando la cita en la agenda del consultorio e indicando que se le recordará 1 día antes y 1 hora antes.
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={waConfirmacion}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> Enviar por WhatsApp
+                    </a>
+                    <a
+                      href={smsConfirmacion}
+                      className="flex-1 py-2 bg-[#0E3346] hover:bg-[#1a4a63] text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      💬 Enviar por SMS
+                    </a>
+                  </div>
+                </div>
+
+                {/* 2. Recordatorio 1 Día Antes (24h) */}
+                <div className="border-2 border-[#0E3346] rounded-xl p-3.5 bg-white">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs text-[#0E3346] flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-[#D96B43]" /> 2. Recordatorio 1 Día Antes (24h)
+                    </span>
+                    <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold uppercase">
+                      24h Antes
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#0E3346]/70 mb-2 leading-relaxed">
+                    Recordatorio preventivo la víspera de la cita solicitando puntualidad (llegar 5 min antes).
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={wa24h}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> Enviar por WhatsApp
+                    </a>
+                    <a
+                      href={sms24h}
+                      className="flex-1 py-2 bg-[#0E3346] hover:bg-[#1a4a63] text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      💬 Enviar por SMS
+                    </a>
+                  </div>
+                </div>
+
+                {/* 3. Recordatorio 1 Hora Antes */}
+                <div className="border-2 border-[#0E3346] rounded-xl p-3.5 bg-white">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs text-[#0E3346] flex items-center gap-1.5">
+                      <Bell className="w-4 h-4 text-blue-600" /> 3. Recordatorio 1 Hora Antes
+                    </span>
+                    <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold uppercase">
+                      1 Hora Antes
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#0E3346]/70 mb-2 leading-relaxed">
+                    Alerta final para que el paciente confirme su traslado hacia el consultorio en El Chamizal.
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={wa1h}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> Enviar por WhatsApp
+                    </a>
+                    <a
+                      href={sms1h}
+                      className="flex-1 py-2 bg-[#0E3346] hover:bg-[#1a4a63] text-white rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      💬 Enviar por SMS
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 text-right">
+                <button
+                  type="button"
+                  onClick={() => setCitaParaNotificar(null)}
+                  className="px-5 py-2 text-xs font-bold text-[#0E3346] bg-slate-100 hover:bg-slate-200 rounded-xl"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
