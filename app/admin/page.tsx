@@ -129,7 +129,7 @@ export default function AdminPage() {
     setGuardandoRegistro(true);
 
     try {
-      const inicio = new Date(`${fechaFiltro}T${nuevaHoraInicio}:00`);
+      const inicio = new Date(`${fechaFiltro}T${nuevaHoraInicio}:00-07:00`);
       const fin = new Date(inicio.getTime() + 35 * 60 * 1000);
 
       const res = await fetch("/api/citas", {
@@ -187,7 +187,7 @@ export default function AdminPage() {
     if (!citaParaReprogramar) return;
 
     try {
-      const inicio = new Date(`${cambioNuevaFecha}T${cambioNuevaHora}:00`);
+      const inicio = new Date(`${cambioNuevaFecha}T${cambioNuevaHora}:00-07:00`);
       const fin = new Date(inicio.getTime() + 35 * 60 * 1000);
 
       const res = await fetch(`/api/citas/${citaParaReprogramar.id}`, {

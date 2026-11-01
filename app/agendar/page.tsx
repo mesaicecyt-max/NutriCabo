@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, User, Phone, CheckCircle2, ArrowRight, Loader2, Sparkles, MessageSquare } from "lucide-react";
+import { Calendar, Clock, User, Phone, CheckCircle2, ArrowRight, Loader2, MessageSquare } from "lucide-react";
 
 interface Slot {
   horaInicio: string;
@@ -25,27 +25,29 @@ export default function AgendarPage() {
   // Formulario del paciente
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [motivo, setMotivo] = useState("Nutrición clínica (diabetes, tiroides, patologías)");
+  const [motivo, setMotivo] = useState("Nutrición clínica (patologías)");
   const [guardando, setGuardando] = useState(false);
   const [citaConfirmada, setCitaConfirmada] = useState<any>(null);
 
-  useEffect(() => {
-    async function cargarSlots() {
-      setCargandoSlots(true);
-      setSlotSeleccionado(null);
-      try {
-        const res = await fetch(`/api/citas?fecha=${fechaSeleccionada}`);
-        const data = await res.json();
-        if (data.slots) {
-          setSlots(data.slots);
-        }
-      } catch (err) {
-        console.error("Error al cargar horarios:", err);
-      } finally {
-        setCargandoSlots(false);
+  // Cargar slots disponibles para la fecha seleccionada
+  async function cargarSlots(fecha: string) {
+    setCargandoSlots(true);
+    setSlotSeleccionado(null);
+    try {
+      const res = await fetch(`/api/citas?fecha=${fecha}`);
+      const data = await res.json();
+      if (data.slots) {
+        setSlots(data.slots);
       }
+    } catch (err) {
+      console.error("Error al cargar horarios:", err);
+    } finally {
+      setCargandoSlots(false);
     }
-    cargarSlots();
+  }
+
+  useEffect(() => {
+    cargarSlots(fechaSeleccionada);
   }, [fechaSeleccionada]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -69,7 +71,23 @@ export default function AgendarPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setCitaConfirmada(data.cita);
+        // Guardamos los datos para la pantalla de confirmación
+        setCitaConfirmada({
+          ...data.cita,
+          nombrePaciente: nombre,
+          telefonoPaciente: telefono,
+          fechaTexto: format(new Date(slotSeleccionado.inicioISO), "EEEE d 'de' MMMM, yyyy", { locale: es }),
+          horarioTexto: `${slotSeleccionado.horaInicio} a ${slotSeleccionado.horaFin} hrs`,
+          motivoTexto: motivo,
+        });
+
+        // LIMPIEZA COMPLETA: Borrar inmediatamente los datos del paciente para que no persistan
+        setNombre("");
+        setTelefono("");
+        setSlotSeleccionado(null);
+
+        // Recargar los slots para que el horario recién reservado aparezca deshabilitado
+        cargarSlots(fechaSeleccionada);
       } else {
         alert(data.error || "Ocurrió un error al agendar.");
       }
@@ -95,27 +113,27 @@ export default function AgendarPage() {
         <div className="bg-white border-2 border-[#0E3346] rounded-2xl p-6 text-left hard-shadow mb-8 space-y-3 font-mono-tag text-xs">
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">Paciente:</span>
-            <span className="font-bold text-[#0E3346]">{citaConfirmada.paciente?.nombre || nombre}</span>
+            <span className="font-bold text-[#0E3346]">{citaConfirmada.nombrePaciente}</span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">WhatsApp:</span>
-            <span className="font-bold text-[#0E3346]">{telefono}</span>
+            <span className="font-bold text-[#0E3346]">{citaConfirmada.telefonoPaciente}</span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">Fecha:</span>
-            <span className="font-bold text-[#0E3346]">
-              {format(new Date(slotSeleccionado!.inicioISO), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+            <span className="font-bold text-[#0E3346] capitalize">
+              {citaConfirmada.fechaTexto}
             </span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">Horario:</span>
             <span className="font-bold text-[#D96B43]">
-              {slotSeleccionado?.horaInicio} a {slotSeleccionado?.horaFin} hrs
+              {citaConfirmada.horarioTexto}
             </span>
           </div>
           <div className="flex justify-between border-b border-[#0E3346]/10 pb-2">
             <span className="text-[#0E3346]/60">Motivo:</span>
-            <span className="font-bold text-[#0E3346]">{motivo}</span>
+            <span className="font-bold text-[#0E3346]">{citaConfirmada.motivoTexto}</span>
           </div>
           <div className="flex justify-between pt-1">
             <span className="text-[#0E3346]/60">Especialista:</span>
@@ -124,13 +142,16 @@ export default function AgendarPage() {
         </div>
 
         <div className="p-4 bg-[#0E3346] text-[#FAF7F2] border-2 border-[#0E3346] rounded-xl text-xs font-mono-tag mb-8 text-left">
-          📱 <strong>Aviso por WhatsApp:</strong> Recibirás la confirmación y recordatorios preventivos a tu número {telefono}.
+          📱 <strong>Aviso por WhatsApp:</strong> Recibirás la confirmación y recordatorios preventivos a tu número {citaConfirmada.telefonoPaciente}.
         </div>
 
         <button
           onClick={() => {
             setCitaConfirmada(null);
             setSlotSeleccionado(null);
+            setNombre("");
+            setTelefono("");
+            cargarSlots(fechaSeleccionada);
           }}
           className="px-6 py-3 bg-[#0E3346] text-white rounded-xl text-xs font-bold font-mono-tag uppercase tracking-wider hard-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px]"
         >
@@ -190,7 +211,7 @@ export default function AgendarPage() {
               </div>
             ) : slots.length === 0 ? (
               <div className="p-8 text-center text-[#0E3346]/70 bg-[#FAF7F2] rounded-xl text-xs font-mono-tag border-2 border-dashed border-[#0E3346]/20">
-                No hay citas programadas para esta fecha o el consultorio se encuentra cerrado. Por favor selecciona otro día.
+                No hay atención programada para esta fecha o el consultorio se encuentra cerrado. Por favor selecciona otro día.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -202,12 +223,12 @@ export default function AgendarPage() {
                       type="button"
                       disabled={!slot.disponible}
                       onClick={() => setSlotSeleccionado(slot)}
-                      className={`py-3 px-3 rounded-xl border-2 border-[#0E3346] text-center transition-all flex flex-col items-center justify-center font-mono-tag ${
+                      className={`py-3 px-3 rounded-xl border-2 text-center transition-all flex flex-col items-center justify-center font-mono-tag ${
                         !slot.disponible
                           ? "bg-slate-100 text-slate-400 cursor-not-allowed line-through opacity-60 border-slate-300"
                           : seleccionado
-                          ? "bg-[#D96B43] text-white hard-shadow font-bold"
-                          : "bg-[#FAF7F2] hover:bg-[#0E3346] hover:text-white text-[#0E3346] hard-shadow-sm"
+                          ? "bg-[#D96B43] border-[#0E3346] text-white hard-shadow font-bold"
+                          : "bg-[#FAF7F2] border-[#0E3346] hover:bg-[#0E3346] hover:text-white text-[#0E3346] hard-shadow-sm"
                       }`}
                     >
                       <span className="text-xs font-bold">

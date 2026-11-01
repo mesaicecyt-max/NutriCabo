@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generarSlotsDisponibles, obtenerHorariosPorDia, DURACION_CITA } from "@/lib/slots";
 import {
-  startOfDay,
-  endOfDay,
+  generarSlotsDisponibles,
+  obtenerHorariosPorDia,
+  DURACION_CITA,
+  TIMEZONE_OFFSET_CLINICA,
+} from "@/lib/slots";
+import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
@@ -18,19 +21,19 @@ export async function GET(req: NextRequest) {
     const vista = searchParams.get("vista") || "dia"; // "dia" | "semana" | "mes"
     const incluirCanceladas = searchParams.get("incluirCanceladas") === "true";
 
-    const hoy = new Date();
-    const fechaReferencia = fechaParam ? new Date(`${fechaParam}T00:00:00`) : hoy;
+    const hoyStr = new Date().toISOString().split("T")[0];
+    const fechaStr = fechaParam || hoyStr;
 
-    // Rango de consulta según la vista
-    let fechaInicioQuery = startOfDay(fechaReferencia);
-    let fechaFinQuery = endOfDay(fechaReferencia);
+    // Límites de fecha con la zona horaria de la clínica (-07:00 B.C.S.)
+    let fechaInicioQuery = new Date(`${fechaStr}T00:00:00${TIMEZONE_OFFSET_CLINICA}`);
+    let fechaFinQuery = new Date(`${fechaStr}T23:59:59.999${TIMEZONE_OFFSET_CLINICA}`);
 
     if (vista === "semana") {
-      fechaInicioQuery = startOfWeek(fechaReferencia, { weekStartsOn: 1 }); // Lunes
-      fechaFinQuery = endOfWeek(fechaReferencia, { weekStartsOn: 1 });
+      fechaInicioQuery = startOfWeek(fechaInicioQuery, { weekStartsOn: 1 }); // Lunes
+      fechaFinQuery = endOfWeek(fechaFinQuery, { weekStartsOn: 1 });
     } else if (vista === "mes") {
-      fechaInicioQuery = startOfMonth(fechaReferencia);
-      fechaFinQuery = endOfMonth(fechaReferencia);
+      fechaInicioQuery = startOfMonth(fechaInicioQuery);
+      fechaFinQuery = endOfMonth(fechaFinQuery);
     }
 
     // 1. Obtener citas para el rango solicitado
@@ -56,15 +59,14 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Reporte de Métricas Totales (Pendientes de atender)
-    // Citas que NO estén CANCELADAS ni COMPLETADAS
     let metricas = { pendientesHoy: 0, pendientesSemana: 0, pendientesMes: 0 };
     try {
-      const hoyInicio = startOfDay(hoy);
-      const hoyFin = endOfDay(hoy);
-      const semInicio = startOfWeek(hoy, { weekStartsOn: 1 });
-      const semFin = endOfWeek(hoy, { weekStartsOn: 1 });
-      const mesInicio = startOfMonth(hoy);
-      const mesFin = endOfMonth(hoy);
+      const hoyInicio = new Date(`${hoyStr}T00:00:00${TIMEZONE_OFFSET_CLINICA}`);
+      const hoyFin = new Date(`${hoyStr}T23:59:59.999${TIMEZONE_OFFSET_CLINICA}`);
+      const semInicio = startOfWeek(hoyInicio, { weekStartsOn: 1 });
+      const semFin = endOfWeek(hoyFin, { weekStartsOn: 1 });
+      const mesInicio = startOfMonth(hoyInicio);
+      const mesFin = endOfMonth(hoyFin);
 
       const [hoyCount, semCount, mesCount] = await Promise.all([
         prisma.cita.count({
@@ -94,10 +96,11 @@ export async function GET(req: NextRequest) {
       };
     } catch (e) {}
 
-    // 3. Si se solicitó la vista de un día en particular, calcular slots de 35 min
+    // 3. Si se solicitó la fecha, generar slots exactos de 35 min
     let slots: any[] = [];
     if (fechaParam) {
-      const diaSemana = fechaReferencia.getDay();
+      const [year, month, day] = fechaParam.split("-").map(Number);
+      const diaSemana = new Date(year, month - 1, day).getDay(); // 0=Domingo, 1=Lunes, ...
       const horariosAtencion = obtenerHorariosPorDia(diaSemana);
 
       // Bloqueos de la nutrióloga para el día
@@ -107,23 +110,18 @@ export async function GET(req: NextRequest) {
           where: {
             OR: [
               {
-                fechaInicio: { lte: endOfDay(fechaReferencia) },
-                fechaFin: { gte: startOfDay(fechaReferencia) },
+                fechaInicio: { lte: fechaFinQuery },
+                fechaFin: { gte: fechaInicioQuery },
               },
             ],
           },
         });
       } catch (e) {}
 
-      const citasDelDia = citas.filter(
-        (c) =>
-          new Date(c.fechaHoraInicio) >= startOfDay(fechaReferencia) &&
-          new Date(c.fechaHoraInicio) <= endOfDay(fechaReferencia) &&
-          c.estado !== "CANCELADA"
-      );
+      const citasActivas = citas.filter((c) => c.estado !== "CANCELADA");
 
       const intervalosOcupados = [
-        ...citasDelDia.map((c) => ({
+        ...citasActivas.map((c) => ({
           inicio: new Date(c.fechaHoraInicio),
           fin: new Date(c.fechaHoraFin),
           motivo: "Consulta agendada",
@@ -135,7 +133,7 @@ export async function GET(req: NextRequest) {
         })),
       ];
 
-      slots = generarSlotsDisponibles(fechaReferencia, horariosAtencion, intervalosOcupados);
+      slots = generarSlotsDisponibles(fechaParam, horariosAtencion, intervalosOcupados);
     }
 
     return NextResponse.json({
@@ -154,7 +152,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nombre, telefonoWhatsapp, fechaHoraInicio, motivoConsulta, origen = "WEB" } = body;
+    const {
+      nombre,
+      telefonoWhatsapp,
+      fechaHoraInicio,
+      fechaHoraFin,
+      motivoConsulta,
+      origen = "WEB",
+    } = body;
 
     if (!nombre || !telefonoWhatsapp || !fechaHoraInicio) {
       return NextResponse.json(
@@ -164,78 +169,74 @@ export async function POST(req: NextRequest) {
     }
 
     const inicio = new Date(fechaHoraInicio);
-    const fin = addMinutes(inicio, DURACION_CITA); // 35 min exactos
+    const fin = fechaHoraFin ? new Date(fechaHoraFin) : addMinutes(inicio, DURACION_CITA);
 
-    let citaCreada;
-    try {
-      let paciente = await prisma.paciente.findUnique({
-        where: { telefonoWhatsapp },
-      });
+    // 1. Buscar o registrar paciente
+    let paciente = await prisma.paciente.findUnique({
+      where: { telefonoWhatsapp },
+    });
 
-      if (!paciente) {
-        paciente = await prisma.paciente.create({
-          data: {
-            nombre,
-            telefonoWhatsapp,
-          },
-        });
-      }
-
-      // Validar que no colisione
-      const colision = await prisma.cita.findFirst({
-        where: {
-          estado: { not: "CANCELADA" },
-          AND: [
-            { fechaHoraInicio: { lt: fin } },
-            { fechaHoraFin: { gt: inicio } },
-          ],
-        },
-      });
-
-      if (colision) {
-        return NextResponse.json(
-          { error: "Este horario ya ha sido reservado por otro paciente." },
-          { status: 409 }
-        );
-      }
-
-      citaCreada = await prisma.cita.create({
+    if (!paciente) {
+      paciente = await prisma.paciente.create({
         data: {
-          pacienteId: paciente.id,
-          fechaHoraInicio: inicio,
-          fechaHoraFin: fin,
-          estado: "CONFIRMADA",
-          origen,
-          motivoConsulta,
-        },
-        include: {
-          paciente: true,
+          nombre,
+          telefonoWhatsapp,
         },
       });
+    } else if (paciente.nombre !== nombre) {
+      // Actualizar nombre si cambió
+      await prisma.paciente.update({
+        where: { id: paciente.id },
+        data: { nombre },
+      });
+    }
 
-      // Notificación de confirmación por WhatsApp
+    // 2. Validar que no colisione con otra cita activa
+    const colision = await prisma.cita.findFirst({
+      where: {
+        estado: { not: "CANCELADA" },
+        AND: [
+          { fechaHoraInicio: { lt: fin } },
+          { fechaHoraFin: { gt: inicio } },
+        ],
+      },
+    });
+
+    if (colision) {
+      return NextResponse.json(
+        { error: "Este horario ya se encuentra reservado. Por favor selecciona otro horario." },
+        { status: 409 }
+      );
+    }
+
+    // 3. Crear cita en PostgreSQL
+    const citaCreada = await prisma.cita.create({
+      data: {
+        pacienteId: paciente.id,
+        fechaHoraInicio: inicio,
+        fechaHoraFin: fin,
+        estado: "CONFIRMADA",
+        origen,
+        motivoConsulta,
+      },
+      include: {
+        paciente: true,
+      },
+    });
+
+    // 4. Notificación de confirmación
+    try {
       await prisma.notificacion.create({
         data: {
           citaId: citaCreada.id,
           tipo: "CONFIRMACION",
           destinatario: telefonoWhatsapp,
-          mensaje: `¡Hola ${nombre}! Tu consulta en ISOS Nutrición Clínica ha sido confirmada para el ${inicio.toLocaleString()}.`,
+          mensaje: `¡Hola ${nombre}! Tu consulta en ISOS Nutrición Clínica ha sido confirmada.`,
           fechaProgramada: new Date(),
         },
       });
-    } catch (dbError) {
-      citaCreada = {
-        id: Math.floor(Math.random() * 1000),
-        fechaHoraInicio: inicio.toISOString(),
-        fechaHoraFin: fin.toISOString(),
-        estado: "CONFIRMADA",
-        origen,
-        motivoConsulta,
-        paciente: {
-          nombre,
-          telefonoWhatsapp,
-        },
-      };
+    } catch (notifErr) {
+      console.warn("No se pudo guardar la notificación en DB:", notifErr);
     }
 
     return NextResponse.json({
@@ -244,6 +245,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error en POST /api/citas:", error);
-    return NextResponse.json({ error: "Error al procesar la cita." }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Error al procesar la cita." }, { status: 500 });
   }
 }
