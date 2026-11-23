@@ -35,7 +35,7 @@ export default function AgendarPage() {
     nombreDoctora: "L.N. Claudia Itzel Chávez García",
     cedula: "15781954",
     nombreClinica: "ISOS Nutrición Clínica",
-    telefonoWhatsapp: "6241220715",
+    telefonoWhatsapp: "6241540111",
     direccion: "s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal",
     ciudad: "San José del Cabo",
     estado: "B.C.S.",

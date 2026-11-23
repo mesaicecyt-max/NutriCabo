@@ -99,13 +99,13 @@ export default function Home() {
             </Link>
 
             <a
-              href="https://wa.me/526241220715?text=Hola%20Nutrióloga%20Claudia,%20me%20gustaría%20solicitar%20información%20para%20una%20consulta%20nutricional"
+              href="https://wa.me/526241540111?text=Hola%20Nutrióloga%20Claudia,%20me%20gustaría%20solicitar%20información%20para%20una%20consulta%20nutricional"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-4 bg-white hover:bg-[#FAF7F2] text-[#0E3346] font-bold rounded-2xl border-2 border-[#0E3346] hard-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all flex items-center gap-2.5 text-sm font-mono-tag"
             >
               <MessageCircle className="w-4 h-4 text-emerald-600" />
-              WhatsApp: 624-122-0715
+              WhatsApp: 624-154-0111
             </a>
           </div>
 
@@ -153,7 +153,7 @@ export default function Home() {
             <div className="space-y-3 bg-white/5 rounded-2xl p-4 border border-white/10 text-xs font-mono-tag mb-6">
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-[#D96B43] flex-shrink-0" />
-                <span>624-122-0715</span>
+                <span>624-154-0111</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-[#D96B43] flex-shrink-0" />
@@ -384,7 +384,7 @@ export default function Home() {
             </p>
             <p className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-[#D96B43] flex-shrink-0" />
-              <span>Teléfono / Citas: <strong>624-122-0715</strong></span>
+              <span>Teléfono / Citas: <strong>624-154-0111</strong></span>
             </p>
             <p className="flex items-center gap-2.5">
               <Mail className="w-4 h-4 text-[#D96B43] flex-shrink-0" />
@@ -418,7 +418,7 @@ export default function Home() {
             </Link>
 
             <a
-              href="https://wa.me/526241220715?text=Hola%20Claudia,%20tengo%20una%20duda%20sobre%20las%20consultas%20en%20ISOS"
+              href="https://wa.me/526241540111?text=Hola%20Claudia,%20tengo%20una%20duda%20sobre%20las%20consultas%20en%20ISOS"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl border-2 border-[#0E3346] hard-shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider transition-all"

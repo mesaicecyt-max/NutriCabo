@@ -102,7 +102,7 @@ model PerfilClinica {
   tituloProfesional String   @default("Licenciada en Nutrición Clínica")
   cedula            String   @default("15781954")
   nombreClinica     String   @default("ISOS Nutrición Clínica")
-  telefonoWhatsapp  String   @default("6241220715")
+  telefonoWhatsapp  String   @default("6241540111")
   email             String   @default("isosnutricion@gmail.com")
   direccion         String   @default("s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal")
   colonia           String   @default("Col. El Chamizal")

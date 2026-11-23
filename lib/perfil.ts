@@ -25,7 +25,7 @@ export const PERFIL_DEFAULT: PerfilClinicaData = {
   tituloProfesional: "Licenciada en Nutrición Clínica",
   cedula: "15781954",
   nombreClinica: "ISOS Nutrición Clínica",
-  telefonoWhatsapp: "6241220715",
+  telefonoWhatsapp: "6241540111",
   email: "isosnutricion@gmail.com",
   direccion: "s/n esquina Alta Tensión frente Cerro de la Chiva, Yate, Col. El Chamizal",
   colonia: "Col. El Chamizal",

@@ -23,7 +23,7 @@ export default function RootLayout({
             </div>
             <div className="flex items-center gap-4 text-[11px] opacity-90">
               <span className="hidden md:inline">📍 Col. El Chamizal · C.P. 23405</span>
-              <span>📞 624-122-0715</span>
+              <span>📞 624-154-0111</span>
               <span className="text-emerald-300 font-bold">AGENDA ABIERTA</span>
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function RootLayout({
                   San José del Cabo, B.C.S.
                 </p>
                 <p className="text-xs font-mono-tag font-bold text-[#0E3346]">
-                  📞 624-122-0715 · ✉️ isosnutricion@gmail.com
+                  📞 624-154-0111 · ✉️ isosnutricion@gmail.com
                 </p>
               </div>
 
@@ -118,7 +118,7 @@ export default function RootLayout({
                     → Misión, Visión y Valores
                   </a>
                   <a
-                    href="https://wa.me/526241220715"
+                    href="https://wa.me/526241540111"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-emerald-700 font-bold flex items-center gap-1"
