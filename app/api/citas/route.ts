@@ -295,6 +295,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error en POST /api/citas:", error);
-    return NextResponse.json({ error: error.message || "Error al procesar la cita." }, { status: 500 });
+    let mensajeError = error.message || "Error al procesar la cita.";
+    if (mensajeError.includes("Can't reach database server") || mensajeError.includes("P1001")) {
+      mensajeError = "No se pudo conectar con la base de datos (Supabase). Si el proyecto tiene más de 7 días sin uso, ingresa a supabase.com para despausarlo ('Restore project').";
+    }
+    return NextResponse.json({ error: mensajeError }, { status: 500 });
   }
 }
